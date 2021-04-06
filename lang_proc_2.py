@@ -13,13 +13,13 @@ from sklearn.feature_extraction import text
 from sklearn.feature_extraction.text import CountVectorizer
 
 
-global_path = '~/Desktop/Datasets/art/art_writing'
+global_path = 'C:/Users/17742/Desktop/win_art_writing/nytimes_articles/articles_dump'
 path = 'artnet_articles'
 #path = 'artnet_articles'
 #path = 'artnet_articles'
-folderpath = os.path.expanduser(os.path.join(global_path, path))
+#folderpath = os.path.expanduser(os.path.join(global_path, path))
 
-filelist = os.listdir(folderpath)
+filelist = os.listdir(global_path)
 
 data = {}
 data_df = pd.DataFrame(data)
@@ -28,7 +28,7 @@ cleaned_titles = []
 cleaned_paras = []
 
 for file in filelist[:5000]:
-    filepath = os.path.join(folderpath, file)
+    filepath = os.path.join(global_path, file)
     f = open(filepath)  # , encoding='ascii', errors='ignore')
     try:
         j_import = json.load(f)
@@ -44,6 +44,7 @@ for file in filelist[:5000]:
             # print(para)
 
             title = j_import['title']
+            title = "@".join(title)
             title = title.replace("	", "").replace("\n", ' ')
             title = title.replace("\r", " ")
             title = title.strip()
