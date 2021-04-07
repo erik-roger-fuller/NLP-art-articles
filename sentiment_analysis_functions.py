@@ -5,8 +5,6 @@ from textblob import TextBlob
 import matplotlib.pyplot as plt
 import matplotlib.lines as ln
 from matplotlib.dates import YearLocator, MonthLocator, DateFormatter, drange , date2num
-import json
-import os
 import nltk
 from nltk import RegexpTokenizer
 import re
@@ -69,8 +67,3 @@ def timeplot_sentiment(data , sentiment, path):
     ax.scatter(xs, ys, color='green', s=1)
     plt.show()
 
-
-# round to nearest years.
-# datemin = np.datetime64(data['pubtime'][0], 'Y')
-# datemax = np.datetime64(data['pubtime'][-1], 'Y') + np.timedelta64(1, 'Y')
-# ax.set_xlim(datemin, datemax)
