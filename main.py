@@ -19,14 +19,16 @@ from matplotlib.dates import YearLocator, MonthLocator, DateFormatter, drange , 
 from datetime import datetime
 import time
 from scipy.signal import savgol_filter
+
 from article_loader_parser import article_loader_to_df
+from sentiment_analysis_functions import *
 
-global_path = 'C:/Users/17742/Desktop/win_art_writing/nytimes_articles/articles_dump'
-path = 'artnet_articles'
+global_path = 'C:/Users/17742/Desktop/win_art_writing/art_writing/'
+path = 'nytimes'
 #path = 'artnet_articles'
 #path = 'artnet_articles'
-#folderpath = os.path.expanduser(os.path.join(global_path, path))
+folder_path = global_path + path #os.path.expanduser(os.path.join(global_path, path))
 
-filelist = os.listdir(global_path)
-data = article_loader_to_df(filelist, 200)
+data = article_loader_to_df(folder_path=folder_path, iterable=50000, israndom=True)
 print(data)
+plot = timeplot_sentiment(data, "polarity", path)

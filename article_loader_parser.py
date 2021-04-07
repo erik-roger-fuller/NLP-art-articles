@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import json
 import os
 import nltk
@@ -13,7 +14,14 @@ import matplotlib.lines as ln
 from matplotlib.dates import YearLocator, MonthLocator, DateFormatter, drange , date2num
 from datetime import datetime
 import time
-from scipy.signal import savgol_filter
+
+def random_corpus_sampling(iterable, filelist):
+    iterable = int(iterable)
+    maximum = len(filelist)
+    rng = np.random.default_rng(iterable)
+    rints = rng.integers(low=0, high=maximum, size=iterable)
+    rints = np.ndarray.tolist(rints)
+    return rints
 
 def para_clean(para):
     para = "".join(para)
@@ -34,14 +42,19 @@ def iso_time_to_df(pubtime_i):
     pubtime = datetime(*time.strptime(pubtime_i, "%Y-%m-%dT%H:%M:%S")[:6])
     return pubtime
 
-def article_loader_to_df(filelist, iterable):
+def article_loader_to_df(folder_path, iterable, israndom):
     """imports a certain number of articles from the database"""
+    filelist = os.listdir(folder_path)
     data = {}
     data = pd.DataFrame(data)
-    cleaned_titles , cleaned_paras = [], []
-    for file in filelist[:iterable]:
-        folderpath = 'C:/Users/17742/Desktop/win_art_writing/nytimes_articles/articles_dump'
-        filepath = os.path.join(folderpath, file)
+    jsonerror , keyerror = 0 , 0
+    if israndom:
+        ints = random_corpus_sampling(iterable, filelist)
+    else:
+        ints = list(range(0, iterable))
+    for i in ints:
+        file = filelist[i]
+        filepath = os.path.join(folder_path, file)
         f = open(filepath) #, encoding='ascii', errors='ignore')
         try:
             j_import = json.load(f)
@@ -49,24 +62,41 @@ def article_loader_to_df(filelist, iterable):
             try:
                 para = j_import['para']
                 para = para_clean(para)
+            except KeyError:
+                para = " "
+                keyerror += 1
+                pass
+            try:
                 title = j_import['title']
                 title = single_line_clean(title)
+            except KeyError:
+                title = " "
+                keyerror += 1
+                pass
+            try:
                 author = j_import['author']
                 author = single_line_clean(author)
-                pubtime_i = j_import['pubtime']
-                pubtime = iso_time_to_df(pubtime_i)
-
-                new_row = {"title" : title , "para" : para , "author": author ,
-                           "pubtime" : pubtime }
-                data = data.append(new_row, ignore_index=True)
-                f.close()
             except KeyError:
-                f.close()
+                author = " "
+                keyerror += 1
                 pass
+            try:
+                pubtime_i = j_import['pubtime']
+            except KeyError:
+                pubtime_i = "2005-06-15T06:06:06"
+                keyerror += 1
+                pass
+            pubtime = iso_time_to_df(pubtime_i)
+            new_row = {"title" : title , "para" : para , "author": author ,
+                       "pubtime" : pubtime }
+            data = data.append(new_row, ignore_index=True)
+            f.close()
         except json.decoder.JSONDecodeError:
             f.close()
+            jsonerror += 1
             pass
     #data = data.set_index('title')
+    print(f"Keyerrors: {keyerror} \t Json import errors: {jsonerror}  \t  final import count: {data.shape}")
     return data
 
 
