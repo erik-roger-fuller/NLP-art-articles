@@ -99,7 +99,6 @@ def article_loader_to_df(folder_path, iterable, israndom):
     print(f"Keyerrors: {keyerror} \t Json import errors: {jsonerror}  \t  final import count: {data.shape}")
     return data
 
-
 # print(para)"""para = para[0]
 #     tokenizer = RegexpTokenizer(r'\w+')
 #     tokens = tokenizer.tokenize(para)
