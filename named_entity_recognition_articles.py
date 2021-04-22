@@ -1,7 +1,32 @@
 import nltk
 import re
 from spacy.kb import KnowledgeBase
+import pandas as pd
 import spacy
+
+def spacy_importer_prepper(data):
+    data = pd.DataFrame(data)
+    nlp = spacy.load('en_core_web_sm')
+    entities = []
+    for i in range(1000):
+        #print(i)
+        #index, article in data.iterrows()
+        article = data.iloc[int(i)]
+        #article = article[0]
+        #para = article["para"]
+        meta_dict = dict([ ( "title" , article["title"] ), ("author", article["author"] ),
+                 ("pubtime" , article["pubtime"]) ])
+        print(meta_dict)
+        #doc = nlp(para)
+        #for ent in doc.ents:
+            #ent_dict = dict([ ("entity", ent.text) , ("label", ent.label_) ])
+            #ents_found.append(ent_dict)
+        #for found_ent in ents_found:
+        # #
+        #ents_found =
+        #    all_dict = found_ent.update(meta_dict)
+        #    entities.append(all_dict)
+        return meta_dict
 
 def tokenize_corpus(joined):
     tokens = nltk.wordpunct_tokenize(joined)
@@ -38,7 +63,7 @@ def permutations(seq):
             for i in range(len(perm)+1):
                 yield perm[:i] + seq[0:1] + perm[i:]
 
- def named_entity_parser(data):
+def named_entity_parser(data):
     lemmatizer = nlp.get_pipe("lemmatizer")
     print(lemmatizer.mode)  # 'rule'
     vocab = nlp.vocab
@@ -47,8 +72,10 @@ def permutations(seq):
     for article in data['para'][:1]:
         doc = nlp(article)
         for e in doc.ents:
-            # ents = [(e.text, e.label_, e.kb_id_)
-            if e.label_ == 'ORG':
+        # ents = [(e.text, e.label_, e.kb_id_)
+            if e.label_ != 'ORG':
+                pass
+            else:
                 orgs.append(e.text)
-    print(orgs)
+                print(orgs)
     return orgs

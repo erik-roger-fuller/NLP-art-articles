@@ -10,6 +10,7 @@ from datetime import datetime
 import time
 import string
 import spacy
+import gensim
 
 nlp = spacy.load("en_core_web_sm")
 from spacy.kb import KnowledgeBase
@@ -56,16 +57,17 @@ def lemmatization(texts, allowed_postags=['NOUN', 'ADJ', 'VERB', 'ADV']):
         text_out = [token.lemma_ for token in doc if token.pos_ in allowed_postags]
     return texts_out
 
-# Remove Stop Words
-# data_clean_nostops = remove_stopwords(data_clean)
+def spacey_load(data_clean):
+    # Remove Stop Words
+    # data_clean_nostops = remove_stopwords(data_clean)
 
-# Initialize spacy 'en' model, keeping only tagger component (for efficiency)
-data_clean_bigrams = make_bigrams(data_clean)
+    # Initialize spacy 'en' model, keeping only tagger component (for efficiency)
+    data_clean_bigrams = make_bigrams(data_clean)
 
-# Do lemmatization keeping only noun, adj, vb, adv
-nlp = spacy.load("en_core_web_sm", disable=['parser', 'ner'])
-data_clean_lemmatized = lemmatization(data_clean_bigrams, allowed_postags=['NOUN', 'ADJ', 'VERB', 'ADV'])
-print(data_clean_lemmatized[:1])
+    # Do lemmatization keeping only noun, adj, vb, adv
+    nlp = spacy.load("en_core_web_sm", disable=['parser', 'ner'])
+    data_clean_lemmatized = lemmatization(data_clean_bigrams, allowed_postags=['NOUN', 'ADJ', 'VERB', 'ADV'])
+    print(data_clean_lemmatized[:1])
 
 
 def return_nouns(data_clean):
@@ -82,24 +84,24 @@ def return_nouns_and_adj(data_clean):
 
 def docterm_to_termdoc(data_docterm):
     # One of the required inputs is a term-document matrix
-    tdm = data_docterm.transpose()
-    return tdm
+    data_termdoc = data_docterm.transpose()
+    return data_termdoc
 
+def gensim_dictionary_build(data_termdoc):
+    # put the term-document matrix into a new gensim format, from df --> sparse matrix --> gensim corpus
+    sparse_counts = scipy.sparse.csr_matrix(data_termdoc)
+    corpus = matutils.Sparse2Corpus(sparse_counts)
+    # Gensim also requires dictionary of the all terms and their respective location in the term-document matrix
+    id2word = dict((v, k) for k, v in cv.vocabulary_.items())
+    # Now that we have the corpus (term-document matrix) and id2word (dictionary of location: term),
+    # we need to specify two other parameters as well - the number of topics and the number of passes
+    lda = models.LdaModel(corpus=corpus, id2word=id2word, num_topics=10, random_state=100,
+                          chunksize=100, passes=50, per_word_topics=True)
+    lda.print_topics()
 
-# put the term-document matrix into a new gensim format, from df --> sparse matrix --> gensim corpus
-sparse_counts = scipy.sparse.csr_matrix(tdm)
-corpus = matutils.Sparse2Corpus(sparse_counts)
-# Gensim also requires dictionary of the all terms and their respective location in the term-document matrix
-id2word = dict((v, k) for k, v in cv.vocabulary_.items())
-# Now that we have the corpus (term-document matrix) and id2word (dictionary of location: term),
-# we need to specify two other parameters as well - the number of topics and the number of passes
-lda = models.LdaModel(corpus=corpus, id2word=id2word, num_topics=10, random_state=100,
-                      chunksize=100, passes=50, per_word_topics=True)
-lda.print_topics()
-
-import gensim.corpora as corpora  # Create Dictionary
-
-id2word = corpora.Dictionary(data_clean['para'])
+    import gensim.corpora as corpora  # Create Dictionary
+    id2word = corpora.Dictionary(data_clean['para'])
+    return id2word
 
 """
 #print(lda.print_topics())

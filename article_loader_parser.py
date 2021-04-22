@@ -18,8 +18,9 @@ import time
 def random_corpus_sampling(iterable, filelist):
     iterable = int(iterable)
     maximum = len(filelist)
-    rng = np.random.default_rng(iterable)
+    rng = np.random.default_rng()#iterable
     rints = rng.integers(low=0, high=maximum, size=iterable)
+    print(rints)
     rints = np.ndarray.tolist(rints)
     return rints
 
@@ -42,7 +43,7 @@ def iso_time_to_df(pubtime_i):
     pubtime = datetime(*time.strptime(pubtime_i, "%Y-%m-%dT%H:%M:%S")[:6])
     return pubtime
 
-def article_loader_to_df(folder_path, iterable, israndom):
+def article_loader_to_df(folder_path, iterable, israndom=False):
     """imports a certain number of articles from the database"""
     filelist = os.listdir(folder_path)
     data = {}
@@ -82,11 +83,12 @@ def article_loader_to_df(folder_path, iterable, israndom):
                 pass
             try:
                 pubtime_i = j_import['pubtime']
+                pubtime = iso_time_to_df(pubtime_i)
             except KeyError:
-                pubtime_i = "2005-06-15T06:06:06"
+                pubtime_i = None #"2005-06-15T06:06:06"
                 keyerror += 1
                 pass
-            pubtime = iso_time_to_df(pubtime_i)
+
             new_row = {"title" : title , "para" : para , "author": author ,
                        "pubtime" : pubtime }
             data = data.append(new_row, ignore_index=True)
