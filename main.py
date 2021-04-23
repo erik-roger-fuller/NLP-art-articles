@@ -23,14 +23,19 @@ from article_loader_parser import article_text_id_assigner
 
 #windows: 'C:/Users/17742/Desktop/win_art_writing/art_writing/'
 global_path = '/home/erik/Desktop/Datasets/art/art_writing/'
-#path = 'nytimes' # 122660 logged
-#path = 'artnet_articles'
+#path = 'nytimes' # 122660 logged #122791 130 before error
+#then 27979 . hyperallergic finished. therfore new begin = 150770 {then plus 500
+#artforumen then logged 62414 frieze logged 14818 brings to 228002
+#artnet then 24546 bringing grand total to 252548
+path = 'artnet_articles'
+#path = 'frieze'
 #path = 'artforum'
+#path = 'hyperallergic'
 
 folder_path = os.path.join(global_path, path)
 # os.path.expanduser()
 
-article_text_id_assigner(folder_path=folder_path, iterable="all", begin=0)
+article_text_id_assigner(folder_path=folder_path, iterable="all", begin=228002 )
 #data = article_loader_to_df(folder_path=folder_path, iterable=50000, israndom=True)
 #print(data)
 #plot = timeplot_sentiment(data, "polarity", path)

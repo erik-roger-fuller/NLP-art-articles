@@ -50,8 +50,8 @@ def iso_time_to_df(pubtime_i):
 
 def space_time_to_df(pubtime_i):
     pubtime_i = single_line_clean(pubtime_i)
-    pubtime_i = pubtime_i.lower()
-    pubtime = datetime(*time.strptime(pubtime_i, "%e %b %y"))  # []%Y-%m-%dT%H:%M:%S
+    pubtime_i = pubtime_i.title()
+    pubtime = datetime.strptime(pubtime_i, "%d %b %y") #
     return pubtime
     # frieze : "pubtime": "31 OCT 18"
 
@@ -59,17 +59,25 @@ def space_time_to_df(pubtime_i):
 def dashes_time_to_df(pubtime_i):
     pubtime_i = single_line_clean(pubtime_i)
     pubtime_i = pubtime_i.lower()
-    pubtime = datetime(*time.strptime(pubtime_i, "%e %b %y"))  # []%Y-%m-%dT%H:%M:%S
+    print(pubtime_i)
+    pubtime = datetime.strptime(pubtime_i, "%Y-%m-%d")  # []%Y-%m-%dT%H:%M:%S
     return pubtime
     # artforum : "2018-04-27"
 
 
 def pubtime_to_df(pubtime_i, source):
-    if source == "Nytimes_Arts" or "artnet" or "Hyperallergic":
-        pubtime = iso_time_to_df(pubtime_i)
-    elif source == "Frieze":
-        pubtime = space_time_to_df(pubtime_i)
-    pubtime = pubtime.strftime("%m/%d/%Y")
+    if pubtime_i == None:
+        pubtime = None
+    else:
+        if source == "Nytimes_Arts" or "artnet" or "Hyperallergic":
+            pubtime = iso_time_to_df(pubtime_i)
+        elif source == "Frieze":
+            pubtime = space_time_to_df(pubtime_i)
+        elif source == "Artforum":
+            pubtime = dashes_time_to_df(pubtime_i)
+
+
+        pubtime = pubtime.strftime("%m/%d/%Y")
     return pubtime
 
 def file_prep_and_export(final, name, text_dict):
@@ -101,7 +109,7 @@ def csv_logger(newname, text_dict, bool=False):
                          "tags": text_dict['tags'], "pubtime": text_dict['pubtime'],
                          "source": text_dict['source'], "filename": newname}
             writer.writerow(log_entry)
-            print(f"logged {text_dict['unique_id']}as : {newname} ")
+            print(f"logged {text_dict['unique_id']}  as : {newname} ")
     return
 
 
@@ -117,9 +125,9 @@ def article_text_id_assigner(folder_path, iterable, begin):
     u_id = begin
     if iterable == "all":
         iterable = len(filelist)
-        ints = list(range(begin, iterable))
+        ints = list(range(0, iterable))#overwrites old files but does not overwrite old logs
     else:
-        ints = list(range(begin, int(begin + iterable)))
+        ints = list(range(0, int(0 + iterable)))
     for i in ints:
         u_id += 1
         file = filelist[i]
@@ -154,7 +162,8 @@ def article_text_id_assigner(folder_path, iterable, begin):
                 pass
 
             try:
-                source = j_import['source']  # change for artnet
+                source = 'artnet'#j_import['source']  # change for artnet
+                print(source)
             except KeyError:
                 source = "error" # None  = "artnet"
                 keyerror += 1
@@ -211,7 +220,7 @@ def article_text_id_assigner(folder_path, iterable, begin):
                      "tags": tags, "captions": captions,
                      "pubtime": pubtime, "source": source}
         print(text_dict)
-        print(f"unique ID int : {u_id}  source: {source} title : {title[10:25]}  iterator {i}")
+        print(f"unique ID int : {u_id}  source: {source} title : {title} \n iterator {i} date: {pubtime}")#[10:25]
         final = file_prep_and_export(final, file, text_dict)
     print(f"Keyerrors: {keyerror} \t Json import errors: {jsonerror}  \t  final import count: {final}")
     return
