@@ -23,14 +23,14 @@ from article_loader_parser import article_text_id_assigner
 
 #windows: 'C:/Users/17742/Desktop/win_art_writing/art_writing/'
 global_path = '/home/erik/Desktop/Datasets/art/art_writing/'
-path = 'nytimes'
+#path = 'nytimes' # 122660 logged
 #path = 'artnet_articles'
 #path = 'artforum'
 
 folder_path = os.path.join(global_path, path)
 # os.path.expanduser()
 
-article_text_id_assigner(folder_path=folder_path, iterable=500, begin=2000)
+article_text_id_assigner(folder_path=folder_path, iterable="all", begin=0)
 #data = article_loader_to_df(folder_path=folder_path, iterable=50000, israndom=True)
 #print(data)
 #plot = timeplot_sentiment(data, "polarity", path)

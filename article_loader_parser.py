@@ -3,10 +3,9 @@ import numpy as np
 import json
 import csv
 import os
-
+import re
 """import nltk
 from nltk import RegexpTokenizer
-import re
 import string
 from sklearn.feature_extraction import text
 from sklearn.feature_extraction.text import CountVectorizer
@@ -16,7 +15,6 @@ import matplotlib.lines as ln
 from matplotlib.dates import YearLocator, MonthLocator, DateFormatter, drange , date2num"""
 from datetime import datetime
 import time
-
 
 def random_corpus_sampling(iterable, filelist):
     iterable = int(iterable)
@@ -71,28 +69,30 @@ def pubtime_to_df(pubtime_i, source):
         pubtime = iso_time_to_df(pubtime_i)
     elif source == "Frieze":
         pubtime = space_time_to_df(pubtime_i)
+    pubtime = pubtime.strftime("%m/%d/%Y")
     return pubtime
 
-
-def file_prep_and_export(name, text_dict):
+def file_prep_and_export(final, name, text_dict):
     newname = filename_clean(name)
-    output_filepath = os.path.join(os.path.expanduser('~'),
-                                   '/Desktop/Datasets/art/art_writing/text_cleaned_all', newname)
-    try:
-        with open(output_filepath, "w") as write_file:
-            json.dump(text_dict, write_file)
-            print(f"written at: {newname} ")
-        write_file.close()
-        csv_logger(newname, text_dict)
-    except FileNotFoundError:
-        print("error:   " + name)
+    output_filepath = os.path.join(os.path.expanduser('~'),'Desktop/Datasets/art/art_writing/text_cleaned_all', newname)
+    #try:
+    with open(output_filepath, "w") as write_file:
+        json.dump(text_dict, write_file )
+        print(f"written at: {newname} ")
+    write_file.close()
+    csv_logger(newname, text_dict)
+    final += 1
+    #except FileNotFoundError:
+    #    print("error:   " + name)
+    return final
 
 
 def csv_logger(newname, text_dict, bool=False):
     log_file = f"{os.path.expanduser('~')}/Desktop/Datasets/art/art_writing/articles_ids_index.csv"
     labels = ["title", "unique_id", "source", "author", "url", "tags", "pubtime", "filename"]
     with open(log_file, 'a') as record_file:
-        writer = csv.DictWriter(record_file, fieldnames=labels)
+        writer = csv.DictWriter(record_file, fieldnames=labels, quoting=csv.QUOTE_NONNUMERIC)
+        #csv.QUOTE_NONNUMERIC
         if bool:
             writer.writeheader()
         else:
@@ -111,12 +111,13 @@ def article_text_id_assigner(folder_path, iterable, begin):
     filelist = os.listdir(folder_path)
     data = {}
     data = pd.DataFrame(data)
-    jsonerror, keyerror = 0, 0
+    jsonerror, keyerror, final = 0, 0, 0
     csv_logger(None, None, True)
     # begin = 0
     u_id = begin
     if iterable == "all":
         iterable = len(filelist)
+        ints = list(range(begin, iterable))
     else:
         ints = list(range(begin, int(begin + iterable)))
     for i in ints:
@@ -127,6 +128,7 @@ def article_text_id_assigner(folder_path, iterable, begin):
         try:
             j_import = json.load(f)
             j_import = j_import[0]
+            #print(j_import)
             try:
                 para = j_import['para']
                 para = para_clean(para)
@@ -187,7 +189,7 @@ def article_text_id_assigner(folder_path, iterable, begin):
                     new_tags.append(tag)
                 tags = new_tags
             except KeyError:
-                captions = None
+                tags = None
                 keyerror += 1
                 pass
 
@@ -208,10 +210,10 @@ def article_text_id_assigner(folder_path, iterable, begin):
                      "para": para, "author": author, "url": url,
                      "tags": tags, "captions": captions,
                      "pubtime": pubtime, "source": source}
-
+        print(text_dict)
         print(f"unique ID int : {u_id}  source: {source} title : {title[10:25]}  iterator {i}")
-        file_prep_and_export(file, text_dict)
-    print(f"Keyerrors: {keyerror} \t Json import errors: {jsonerror}  \t  final import count: {data.shape}")
+        final = file_prep_and_export(final, file, text_dict)
+    print(f"Keyerrors: {keyerror} \t Json import errors: {jsonerror}  \t  final import count: {final}")
     return
 
 
@@ -292,6 +294,8 @@ def filename_clean(filename):
     # things that look like whiskers
     newname = newname.replace("`", "").replace("'", "").replace('"', "")
     newname = newname.replace(".", "_").replace(",", "_").replace("+", "_")
+    newname = newname.replace("__", "_")
+    newname = re.sub(r'[T][\d][\d][_][\d][\d][_][\d][\d][_][\d][\d][_][\d][\d][_]','_', newname) #{2}[\d][_]{2}[\d][_]{2}[\d][_]'T00_00_00_05_00_
     newfilename = str(newname + ".json")
     return newfilename
 
