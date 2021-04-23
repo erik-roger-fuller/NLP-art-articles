@@ -80,6 +80,11 @@ def pubtime_to_df(pubtime_i, source):
         pubtime = pubtime.strftime("%m/%d/%Y")
     return pubtime
 
+def cleaned_time_to_df(pubtime_i):
+    "%m/%d/%Y"
+    pubtime = datetime.strptime(pubtime_i, "%m/%d/%Y" )  #
+    return pubtime
+
 def file_prep_and_export(final, name, text_dict):
     newname = filename_clean(name)
     output_filepath = os.path.join(os.path.expanduser('~'),'Desktop/Datasets/art/art_writing/text_cleaned_all', newname)
@@ -242,38 +247,67 @@ def article_loader_to_df(folder_path, iterable, israndom=False):
         f = open(filepath)  # , encoding='ascii', errors='ignore')
         try:
             j_import = json.load(f)
-            j_import = j_import[0]
+            #j_import = j_import[0]
+            # print(j_import)
+
+            unique_id = j_import['unique_id']
             try:
                 para = j_import['para']
-                para = para_clean(para)
+
             except KeyError:
-                para = " "
-                keyerror += 1
-                pass
-            try:
-                title = j_import['title']
-                title = single_line_clean(title)
-            except KeyError:
-                title = " "
-                keyerror += 1
-                pass
-            try:
-                author = j_import['author']
-                author = single_line_clean(author)
-            except KeyError:
-                author = " "
-                keyerror += 1
-                pass
-            try:
-                pubtime_i = j_import['pubtime']
-                pubtime = iso_time_to_df(pubtime_i)
-            except KeyError:
-                pubtime_i = None  # "2005-06-15T06:06:06"
+                para = None
                 keyerror += 1
                 pass
 
-            new_row = {"title": title, "para": para, "author": author,
-                       "pubtime": pubtime}
+            try:
+                title = j_import['title']
+            except KeyError:
+                title = None
+                keyerror += 1
+                pass
+
+            try:
+                author = j_import['author']
+            except KeyError:
+                author = None
+                keyerror += 1
+                pass
+
+            try:
+                source = j_import['source']  # change for artnet
+            except KeyError:
+                source = "error"  # None  = "artnet"
+                keyerror += 1
+                pass
+            try:
+                url = j_import['url']
+            except KeyError:
+                url = None
+                keyerror += 1
+                pass
+
+            try:
+                captions = j_import['captions']
+            except KeyError:
+                captions = None
+                keyerror += 1
+                pass
+
+            try:
+                tags = j_import['tag']
+            except KeyError:
+                tags = None
+                keyerror += 1
+                pass
+
+            pubtime_i = j_import['pubtime']
+            pubtime = cleaned_time_to_df(pubtime_i)
+
+            new_row = {"title": title, "unique_id": unique_id,
+                     "para": para, "author": author, "url": url,
+                     "tags": tags, "captions": captions,
+                     "pubtime": pubtime, "source": source}
+            print(new_row)
             data = data.append(new_row, ignore_index=True)
             f.close()
         except json.decoder.JSONDecodeError:
