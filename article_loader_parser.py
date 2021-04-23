@@ -85,6 +85,95 @@ def cleaned_time_to_df(pubtime_i):
     pubtime = datetime.strptime(pubtime_i, "%m/%d/%Y" )  #
     return pubtime
 
+
+def article_loader_to_df(folder_path, iterable, israndom=False):
+    """imports a certain number of articles from the database"""
+    filelist = os.listdir(folder_path)
+    data = {}
+    data = pd.DataFrame(data)
+    jsonerror, keyerror = 0, 0
+    if israndom:
+        ints = random_corpus_sampling(iterable, filelist)
+    else:
+        ints = list(range(0, iterable))
+    for i in ints:
+        file = filelist[i]
+        filepath = os.path.join(folder_path, file)
+        f = open(filepath)  # , encoding='ascii', errors='ignore')
+        try:
+            j_import = json.load(f)
+            #j_import = j_import[0]
+            # print(j_import)
+
+            unique_id = j_import['unique_id']
+            try:
+                para = j_import['para']
+
+            except KeyError:
+                para = None
+                keyerror += 1
+                pass
+
+            try:
+                title = j_import['title']
+            except KeyError:
+                title = None
+                keyerror += 1
+                pass
+
+            try:
+                author = j_import['author']
+            except KeyError:
+                author = None
+                keyerror += 1
+                pass
+
+            try:
+                source = j_import['source']  # change for artnet
+            except KeyError:
+                source = "error"  # None  = "artnet"
+                keyerror += 1
+                pass
+            try:
+                url = j_import['url']
+            except KeyError:
+                url = None
+                keyerror += 1
+                pass
+
+            try:
+                captions = j_import['captions']
+            except KeyError:
+                captions = None
+                keyerror += 1
+                pass
+
+            try:
+                tags = j_import['tag']
+            except KeyError:
+                tags = None
+                keyerror += 1
+                pass
+
+            pubtime_i = j_import['pubtime']
+            pubtime = cleaned_time_to_df(pubtime_i)
+
+            new_row = {"title": title, "unique_id": unique_id,
+                     "para": para, "author": author, "url": url,
+                     "tags": tags, "captions": captions,
+                     "pubtime": pubtime, "source": source}
+            print(new_row)
+            data = data.append(new_row, ignore_index=True)
+            f.close()
+        except json.decoder.JSONDecodeError:
+            f.close()
+            jsonerror += 1
+            pass
+    #data = data.set_index('')
+    print(f"Keyerrors: {keyerror} \t Json import errors: {jsonerror}  \t  final import count: {data.shape}")
+    return data
+
+
 def file_prep_and_export(final, name, text_dict):
     newname = filename_clean(name)
     output_filepath = os.path.join(os.path.expanduser('~'),'Desktop/Datasets/art/art_writing/text_cleaned_all', newname)
@@ -117,6 +206,29 @@ def csv_logger(newname, text_dict, bool=False):
             print(f"logged {text_dict['unique_id']}  as : {newname} ")
     return
 
+
+def filename_clean(filename):
+    newname = filename.replace(".json", "")
+    newname = newname.replace("-", "_").replace(":", "_").replace(";", "")
+    newname = newname.replace("  ", "_").replace(" ", "_")
+
+    # funny business
+    newname = newname.replace('#', '').replace('%', '').replace('*', '')
+    newname = newname.replace('<', '').replace('>', '').replace('@', '_AT_')
+    newname = newname.replace('?', '')
+
+    # things that look like bananas
+    newname = newname.replace("(", "").replace(")", "").replace("[", "")
+    newname = newname.replace("]", "").replace("{", "").replace("}", "")
+    newname = newname.replace("/", "").replace("\\", "").replace("|", "")
+
+    # things that look like whiskers
+    newname = newname.replace("`", "").replace("'", "").replace('"', "")
+    newname = newname.replace(".", "_").replace(",", "_").replace("+", "_")
+    newname = newname.replace("__", "_")
+    newname = re.sub(r'[T][\d][\d][_][\d][\d][_][\d][\d][_][\d][\d][_][\d][\d][_]','_', newname) #{2}[\d][_]{2}[\d][_]{2}[\d][_]'T00_00_00_05_00_
+    newfilename = str(newname + ".json")
+    return newfilename
 
 def article_text_id_assigner(folder_path, iterable, begin):
     """imports all textonly fields of the article and then reassigns them a unique ID
@@ -231,116 +343,6 @@ def article_text_id_assigner(folder_path, iterable, begin):
     return
 
 
-def article_loader_to_df(folder_path, iterable, israndom=False):
-    """imports a certain number of articles from the database"""
-    filelist = os.listdir(folder_path)
-    data = {}
-    data = pd.DataFrame(data)
-    jsonerror, keyerror = 0, 0
-    if israndom:
-        ints = random_corpus_sampling(iterable, filelist)
-    else:
-        ints = list(range(0, iterable))
-    for i in ints:
-        file = filelist[i]
-        filepath = os.path.join(folder_path, file)
-        f = open(filepath)  # , encoding='ascii', errors='ignore')
-        try:
-            j_import = json.load(f)
-            #j_import = j_import[0]
-            # print(j_import)
-
-            unique_id = j_import['unique_id']
-            try:
-                para = j_import['para']
-
-            except KeyError:
-                para = None
-                keyerror += 1
-                pass
-
-            try:
-                title = j_import['title']
-            except KeyError:
-                title = None
-                keyerror += 1
-                pass
-
-            try:
-                author = j_import['author']
-            except KeyError:
-                author = None
-                keyerror += 1
-                pass
-
-            try:
-                source = j_import['source']  # change for artnet
-            except KeyError:
-                source = "error"  # None  = "artnet"
-                keyerror += 1
-                pass
-            try:
-                url = j_import['url']
-            except KeyError:
-                url = None
-                keyerror += 1
-                pass
-
-            try:
-                captions = j_import['captions']
-            except KeyError:
-                captions = None
-                keyerror += 1
-                pass
-
-            try:
-                tags = j_import['tag']
-            except KeyError:
-                tags = None
-                keyerror += 1
-                pass
-
-            pubtime_i = j_import['pubtime']
-            pubtime = cleaned_time_to_df(pubtime_i)
-
-            new_row = {"title": title, "unique_id": unique_id,
-                     "para": para, "author": author, "url": url,
-                     "tags": tags, "captions": captions,
-                     "pubtime": pubtime, "source": source}
-            print(new_row)
-            data = data.append(new_row, ignore_index=True)
-            f.close()
-        except json.decoder.JSONDecodeError:
-            f.close()
-            jsonerror += 1
-            pass
-    # data = data.set_index('title')
-    print(f"Keyerrors: {keyerror} \t Json import errors: {jsonerror}  \t  final import count: {data.shape}")
-    return data
-
-
-def filename_clean(filename):
-    newname = filename.replace(".json", "")
-    newname = newname.replace("-", "_").replace(":", "_").replace(";", "")
-    newname = newname.replace("  ", "_").replace(" ", "_")
-
-    # funny business
-    newname = newname.replace('#', '').replace('%', '').replace('*', '')
-    newname = newname.replace('<', '').replace('>', '').replace('@', '_AT_')
-    newname = newname.replace('?', '')
-
-    # things that look like bananas
-    newname = newname.replace("(", "").replace(")", "").replace("[", "")
-    newname = newname.replace("]", "").replace("{", "").replace("}", "")
-    newname = newname.replace("/", "").replace("\\", "").replace("|", "")
-
-    # things that look like whiskers
-    newname = newname.replace("`", "").replace("'", "").replace('"', "")
-    newname = newname.replace(".", "_").replace(",", "_").replace("+", "_")
-    newname = newname.replace("__", "_")
-    newname = re.sub(r'[T][\d][\d][_][\d][\d][_][\d][\d][_][\d][\d][_][\d][\d][_]','_', newname) #{2}[\d][_]{2}[\d][_]{2}[\d][_]'T00_00_00_05_00_
-    newfilename = str(newname + ".json")
-    return newfilename
 
 # print(para)"""para = para[0]
 #     tokenizer = RegexpTokenizer(r'\w+')

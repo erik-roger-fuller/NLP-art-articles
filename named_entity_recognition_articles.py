@@ -8,25 +8,25 @@ def spacy_importer_prepper(data):
     data = pd.DataFrame(data)
     nlp = spacy.load('en_core_web_sm')
     entities = []
-    for i in range(1000):
+    for i in range(ite):
+        ents_found = []
         #print(i)
         #index, article in data.iterrows()
         article = data.iloc[int(i)]
         #article = article[0]
-        #para = article["para"]
+        para = article["para"]
         meta_dict = dict([ ( "title" , article["title"] ), ("author", article["author"] ),
                  ("pubtime" , article["pubtime"]) ])
         print(meta_dict)
-        #doc = nlp(para)
-        #for ent in doc.ents:
-            #ent_dict = dict([ ("entity", ent.text) , ("label", ent.label_) ])
-            #ents_found.append(ent_dict)
-        #for found_ent in ents_found:
-        # #
-        #ents_found =
-        #    all_dict = found_ent.update(meta_dict)
-        #    entities.append(all_dict)
-        return meta_dict
+        doc = nlp(para)
+        for ent in doc.ents:
+            ent_dict = dict([ ("entity", ent.text) , ("label", ent.label_) ])
+            ents_found.append(ent_dict)
+    for found_ent in ents_found:
+
+        all_dict = found_ent.update(meta_dict)
+        entities.append(all_dict)
+    return entities
 
 def tokenize_corpus(joined):
     tokens = nltk.wordpunct_tokenize(joined)
