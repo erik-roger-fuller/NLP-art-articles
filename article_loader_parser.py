@@ -16,12 +16,37 @@ from matplotlib.dates import YearLocator, MonthLocator, DateFormatter, drange , 
 from datetime import datetime
 import time
 
+from pathlib import Path
+
+def load_entities():
+    entities_loc =  os.path.join('C:/Users/17742/Desktop/win_art_writing/art_galleries_nyc' , "ART_GALLERY.csv")
+    names = dict()
+    descriptions = dict()
+    locations = dict()
+    intid = 0
+    with open(entities_loc, "r", encoding="utf8") as csvfile:
+        csvreader = csv.DictReader(csvfile, delimiter=",")
+        for row in csvreader:
+            intid +=1
+            print(row['NAME'])
+            name = row['NAME']
+            desc = "art gallery"
+            loc = row['CITY']
+            alphanum = "A"
+            qid = alphanum + str(intid)
+            names[qid] = name
+            descriptions[qid] = desc
+            locations[qid] = loc
+    return names, descriptions, locations
+
+
+
 def random_corpus_sampling(iterable, filelist):
     iterable = int(iterable)
     maximum = len(filelist)
     rng = np.random.default_rng()  # iterable
     rints = rng.integers(low=0, high=maximum, size=iterable)
-    print(rints)
+    #print(rints)
     rints = np.ndarray.tolist(rints)
     return rints
 

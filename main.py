@@ -16,7 +16,7 @@ from matplotlib.dates import YearLocator, MonthLocator, DateFormatter, drange , 
 from datetime import datetime
 import time"""
 
-from article_loader_parser import article_text_id_assigner, article_loader_to_df
+from article_loader_parser import article_text_id_assigner, article_loader_to_df, load_entities
 #from sentiment_analysis_functions import *
 #from word_cleaning_functions import *
 #from topic_modeling_functions import *
@@ -36,6 +36,9 @@ folder_path = os.path.join(global_path, path)
 # os.path.expanduser()
 
 #article_text_id_assigner(folder_path=folder_path, iterable="all", begin=228002 )
-data = article_loader_to_df(folder_path=folder_path, iterable=5000, israndom=True)
-print(data)
+#data = article_loader_to_df(folder_path=folder_path, iterable=5000, israndom=True)
+#print(data)
 #plot = timeplot_sentiment(data, "polarity", path)
+name_dict, desc_dict, loc_dict = load_entities()
+for QID in name_dict.keys():
+    print(f"{QID}, name={name_dict[QID]}, desc={desc_dict[QID]} located={loc_dict[QID]}")
