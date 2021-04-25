@@ -13,25 +13,7 @@ folder_path = os.path.join(global_path, path)
 # os.path.expanduser()
 
 
-encyc = pd.DataFrame()
-encyc0 = ents_encyc_builder("museum_datasets/MuseumFile2018_File1_Nulls.csv", 917)
-print(encyc0.head)
 
-begin = encyc0.shape[0]
-encyc1 = ents_encyc_builder("museum_datasets/MuseumFile2018_File2_Nulls.csv", begin, "GMU")
-print(encyc1.head)
-frames = [encyc0, encyc1]
-
-encyc = pd.concat(frames, sort=False)
-begin = encyc.shape[0]
-
-encyc2 = ents_encyc_builder("museum_datasets/MuseumFile2018_File3_Nulls.csv", begin, "HSC")
-print(encyc2.head)
-frames = [encyc, encyc2]
-encyc = pd.concat(frames, sort=False)
-
-print(encyc)
-encyc.to_csv("museums_usa.csv", sep=",", quoting= csv.QUOTE_NONNUMERIC )
 
 #article_text_id_assigner(folder_path=folder_path, iterable="all", begin=228002 )
 #data = article_loader_to_df(folder_path=folder_path, iterable=5000, israndom=True)

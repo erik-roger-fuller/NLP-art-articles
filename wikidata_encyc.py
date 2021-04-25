@@ -22,7 +22,7 @@ def get_text_from(entry):
 sparql_query = """
 SELECT ?museum ?country ?countryLabel ?located_in_the_administrative_territorial_entity ?located_in_the_administrative_territorial_entityLabel ?location ?locationLabel ?instance_of ?instance_ofLabel ?museumLabel WHERE {
   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
-  ?museum wdt:P31 wd:Q33506.
+  ?museum wdt:P31 wd:Q1007870.
   OPTIONAL { ?museum wdt:P17 ?country. }
   OPTIONAL { ?museum wdt:P131 ?located_in_the_administrative_territorial_entity. }
   OPTIONAL {  }
@@ -65,12 +65,12 @@ for i in range(results.shape[0]):
 
         school = ["school", "college", "university", "academy"]
 
-        desc1 = [desc1]
-        #if any(x in desc1.lower() for x in school):
-        #    desc1 = [desc1]
-        desc1.append("academic institution")
-        #else:
-        #    desc1 =[desc1]
+
+        if any(x in desc1.lower() for x in school):
+            desc1 = [desc1]
+            desc1.append("academic institution")
+        else:
+            desc1 =[desc1]
 
         city = row['locationLabel']
         city = get_text_from(city)
@@ -93,13 +93,13 @@ for i in range(results.shape[0]):
         identity = {"qid": qid, "name": name, "city": city1, "loc": loc, "desc": desc1}
         encyc = encyc.append(identity, ignore_index=True)
 
-        if i % 9999 == 0:
-            encyc.to_json(f'wikidata_museums_test{i}.json')
-            print(i)
+        #if i % 9999 == 0:
+        #    encyc.to_json(f'wikidata_art_galleries_test{i}.json')
+        #    print(i)
     except KeyError:
         pass
 
-encyc.to_json('wikidata_museums.json')
+encyc.to_json('wikidata_art_gallery.json')
 
 
 
