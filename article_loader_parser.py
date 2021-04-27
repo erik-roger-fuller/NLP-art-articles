@@ -111,7 +111,7 @@ def cleaned_time_to_df(pubtime_i):
     return pubtime
 
 
-def article_loader_to_df(folder_path, iterable, israndom=False):
+def article_loader_to_df(folder_path, iterable, begin=0, israndom=False, fileguide=None):
     """imports a certain number of articles from the database"""
     filelist = os.listdir(folder_path)
     data = {}
@@ -120,9 +120,12 @@ def article_loader_to_df(folder_path, iterable, israndom=False):
     if israndom:
         ints = random_corpus_sampling(iterable, filelist)
     else:
-        ints = list(range(0, iterable))
+        ints = list(range(begin, (begin + iterable)))
+    #if fileguide:
+    #    ints = fileguide
     for i in ints:
-        file = filelist[i]
+        h = fileguide[i]
+        file = filelist[h]
         filepath = os.path.join(folder_path, file)
         f = open(filepath)  # , encoding='ascii', errors='ignore')
         try:

@@ -3,39 +3,123 @@ import re
 from spacy.kb import KnowledgeBase
 import pandas as pd
 import spacy
+import numpy as np
 
 
-def spacy_importer_prepper(data):
-    entities = []
-    for i in range(data.shape[0]):
-        ents_found = []
-        # print(i)
-        # index, article in data.iterrows()
-        article = data.iloc[int(i)]
-        # article = article[0]
-        para = article["para"]
-        meta_dict = dict([("unique_id", article["unique_id"]), ("title", article["title"]), ("author", article["author"]),
-                          ("pubtime", article["pubtime"])])
-        #print(meta_dict)
+def ent_text_clean(text):
+    text = text.replace("'s", "")
+    return text
+
+def abbreviation_parser(orgs_found):
+    abbrevs, tests = [], [],
+    # print("orgs: ", len(orgs_found))
+    for org in orgs_found:
+        org = org.replace(".", "")
+        org = ent_text_clean(org)
+        try:
+            if len(re.findall("[A-Z]", org)) / len(org.replace(" ", "")) > .65:
+                abbrevs.append(org)
+            else:
+                tests.append(org)
+        except ZeroDivisionError:
+            tests.append(org)
+
+    print("orgs:", len(abbrevs) + len(tests))
+    if len(abbrevs) > 0:
+        for test in tests:
+            test_first = re.sub("^[Tt][h][e][\s]", "", test)  # elim "T/the"
+            test_first = re.findall("([A-Za-z])\w+", test_first)
+            test_first = "".join(test_first)
+
+            if len(test_first) > 2:
+                abbrevs = [test if i == test_first else i for i in abbrevs]
+
+                test_first_noof = test_first.replace("o", "").replace("f", "").replace("t", "")
+                # print(test_first_noof)
+                abbrevs = [test if i == test_first_noof else i for i in abbrevs]
+
+                test_first_upper = test_first.upper()
+                abbrevs = [test if i.upper() == test_first_upper else i for i in abbrevs]
+
+                # abbrevs = ["Museum of Contemporary Art" if i=="MOCA" else i for i in abbrevs]
+                # abbrevs = ["Museum of Contemporary Art" if i=="MOCA" else i for i in abbrevs]
+
+        tests.extend(abbrevs)
+    print("replaced or remaining: ", len(abbrevs), abbrevs)
+    print("unabbreved: ", len(tests), tests)
+        #tests = np.array(tests, dtype=np.str_)
+
+    return tests
+
+nlp = spacy.load('en_core_web_trf')  # lg')
+
+def ner_grabber(para, unique_id, nlp):
+    document_mentions, document_person_mentions = [] , []
+    orgs_text = []
+    people_text = []
+    orgs_found = {}#np.array()
+    people_found = {}
+    if para and unique_id:
         try:
             doc = nlp(para)
             for ent in doc.ents:
-                #ent_dict = dict([("entity", str(ent.text)), ("label", str(ent.label_))])
-                text = ent.text
-                label = ent.label_
-                print((text, label), end=', ')
-                ent_dict = {"txt": str(text), "label": str(text)}
-                ents_found.append(ent_dict)
-                #print(ent_dict)
-        except TypeError:
-            print(article['unique_id'])
+                # ent_dict = dict([("entity", str(ent.text)), ("label", str(ent.label_))])
+                if ent.label_ == 'ORG':
+                    # print(ent.text, ent.label_)
+                    text = ent_text_clean(ent.text)
+                    orgs_text.append(text)  # , ent.label_}
+                elif ent.label_ == 'PERSON':
+                    # print(ent.text, ent.label_)
+                    text = ent_text_clean(ent.text)
+                    people_text.append(text)  # , ent.label_}
+            orgs_text = abbreviation_parser(orgs_text)
+            for org in orgs_text:
+                try:
+                    document_mentions.append({"unique_id":unique_id, "entity": org})
+                except ValueError:
+                    pass
+            print("persons: ", people_text)
+            for person in people_text:
+                try:
+                    document_person_mentions.append({"unique_id":unique_id, "entity": person})
+                except ValueError:
+                    pass
+
+        except IndexError:
             pass
-        for found_ent in ents_found:
-            all_dict = found_ent.update(meta_dict)
-            #print(all_dict, end=', ')
-            entities.append(all_dict)
-        print("  \n")
-    return entities
+    #print("  \n")
+    else:
+        pass
+
+    return document_mentions, document_person_mentions
+
+#orgs_found[unique_id] = org
+def spacy_importer_prepper(data, model):
+    nlp = spacy.load(model)
+    try:
+        all_docs_mentions = np.vectorize(ner_grabber)(data['para'] , data["unique_id"], nlp)
+    except ValueError:
+        all_docs_mentions = []
+        pass
+    return all_docs_mentions
+
+
+
+"""               # except TypeError:
+            #    print("didnt work" , article['unique_id'])
+            #    pass
+            #document_mentions
+            #orgs_found[unique_id] = orgs_text
+            #orgs_found = np.array([unique_id, orgs_text]) for i in range(sample):
+        
+        article = data.iloc[int(i)]
+        # article = article[0]
+        para = article["para"]
+        unique_id = int(article["unique_id"])
+    """
+
+
+
 
 
 
