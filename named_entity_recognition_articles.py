@@ -98,6 +98,7 @@ def spacy_importer_prepper(data, model):
     nlp = spacy.load(model)
     try:
         all_docs_mentions = np.vectorize(ner_grabber)(data['para'] , data["unique_id"], nlp)
+        #convert to pandas seriers here
     except ValueError:
         all_docs_mentions = []
         pass

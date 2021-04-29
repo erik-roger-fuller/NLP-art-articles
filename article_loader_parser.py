@@ -124,8 +124,8 @@ def article_loader_to_df(folder_path, iterable, begin=0, israndom=False, filegui
     #if fileguide:
     #    ints = fileguide
     for i in ints:
-        h = fileguide[i]
-        file = filelist[h]
+        h = fileguide[i] ###Hardcoded!!!! breaks others
+        file = filelist[h]  ###Hardcoded!!!! breaks others
         filepath = os.path.join(folder_path, file)
         f = open(filepath)  # , encoding='ascii', errors='ignore')
         try:
