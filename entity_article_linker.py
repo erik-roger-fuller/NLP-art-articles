@@ -5,23 +5,58 @@ import os
 import csv
 import spacy
 import time
+from fuzzywuzzy import fuzz
+
+def levenshtien_distance(x,y):
+    return fuzz.ratio(x, y)
+
+
+def compare_lev(name1, encyc_m):
+    matches = []
+    results = np.vectorize(levenshtien_distance)(name1, encyc_m['name'])
+    out = np.where(results > 85)
+    #print(len(out))
+    if out[0].size > 0:
+        match = encyc_m['name'].iloc[out]
+        #print(name1, match)
+        #print(out.shape[0]).shape[0]
+        matches.append(out)
+
+    if len(matches)>0:
+        return matches
 
 ref_file = "C:\\Users\\17742\\Desktop\\win_art_writing\\art_writing\\text_cleaned\\articles_ids_index.csv"
-
-#path = 'text_cleaned_all'
 folder_path = "entities_backups"#os.path.join(global_path, path)
 
-filelist = os.listdir(folder_path)
+
+with open(ref_file, "r", encoding='utf-8') as read:
+    reference = pd.read_csv(read, low_memory=False)
+    reference.set_index("unique_id")
+
+with open("person_entities_cleaned.csv", "r", encoding='utf-8') as read2:
+    record = pd.read_csv(read, low_memory=False)
+    record.set_index("unique_id")
+
+    for i in range(reference.shape[0]):
+        name1 = reference['entity']
+        entry = record[record.index == i]
+        if entry.shape[0] > 1:
 
 
 
+        #    record.loc[i, "entity"] = first_name_last(entry["entity"])
+        #print(entry)
 
-#def article_ent_linker(file, entry, doc_ent_matrix_orgs, doc_ent_matrix_pers ):
-    #print(entry.dtype)
 
+    ##del record['Unnamed: 0']
+    #record.replace([], np.nan, inplace=True)
+    #record.dropna(subset=['entity'], inplace=True)
+
+
+
+"""
 def first_name_last(names):
     tests = {}
-
     for name in names:
         name = name.replace("'s","").replace("`s","").replace("’s","")
         s_name = name.split(" ")
@@ -36,9 +71,14 @@ def first_name_last(names):
     print("output: ",names)
     return names
 
-#with open(ref_file, "r", encoding='utf-8') as read:
-#    reference = pd.read_csv(read, low_memory=False)
-#    reference.set_index("unique_id")
+    #reference = pd.DataFrame(reference){"unique_id": None, "entity": None}
+        #article_ent_linker(file, entry, doc_ent_matrix_orgs, doc_ent_matrix_pers)
+#print(doc_ent_matrix_orgs)
+
+filelist = os.listdir(folder_path)
+#def article_ent_linker(file, entry, doc_ent_matrix_orgs, doc_ent_matrix_pers ):
+    #print(entry.dtype)
+
 
 file = "all_art_persons_entities.csv"
 
@@ -51,23 +91,8 @@ with open(file, 'r', encoding='utf-8') as read2:
     record.dropna(subset=['entity'], inplace=True)
 
 
-for i in range(record.shape[0]):
-    entry = record[record.index == i]
-
-    if entry.shape[0]>1:
-        record.loc[i, "entity"] = first_name_last(entry["entity"])
-    print(entry)
-
-record.to_csv("person_entities_cleaned.csv", sep=",", quoting=csv.QUOTE_NONNUMERIC)
 
 
-
-    #reference = pd.DataFrame(reference){"unique_id": None, "entity": None}
-        #article_ent_linker(file, entry, doc_ent_matrix_orgs, doc_ent_matrix_pers)
-#print(doc_ent_matrix_orgs)
-
-
-"""
 def export_to_matrix(unique_id, entity, flag):
     entry_s = {"unique_id": unique_id, "entity": entity}
     print(entry_s)
