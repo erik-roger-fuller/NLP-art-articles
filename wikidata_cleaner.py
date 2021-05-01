@@ -29,9 +29,23 @@ def make_list(xs):
 #identity = {"qid": qid, "name": name, "city": city1, "loc": loc, "desc": desc1}
 
 
+def levenshtien_distance(x,y):
+    return fuzz.ratio(x, y)
 
 
+def compare_lev(name1, encyc_m):
+    matches = []
+    results = np.vectorize(levenshtien_distance)(name1, encyc_m['name'])
+    out = np.where(results > 85)
+    #print(len(out))
+    if out[0].size > 0:
+        match = encyc_m['name'].iloc[out]
+        #print(name1, match)
+        #print(out.shape[0]).shape[0]
+        matches.append(out)
 
+    if len(matches)>0:
+        return matches
 
     #print(matches)800
 def convert_set(set):

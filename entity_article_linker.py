@@ -25,8 +25,9 @@ def compare_lev(name1, encyc_m):
     if len(matches)>0:
         return matches
 
-ref_file = "C:\\Users\\17742\\Desktop\\win_art_writing\\art_writing\\text_cleaned\\articles_ids_index.csv"
-folder_path = "entities_backups"#os.path.join(global_path, path)
+#ref_file = "C:\\Users\\17742\\Desktop\\win_art_writing\\art_writing\\text_cleaned\\articles_ids_index.csv" ##win
+ref_file = "/home/erik/Desktop/Datasets/art/art_writing/text_cleaned/articles_ids_index.csv" ##linux
+#folder_path = "entities_backups"#os.path.join(global_path, path)
 
 
 with open(ref_file, "r", encoding='utf-8') as read:
@@ -34,13 +35,29 @@ with open(ref_file, "r", encoding='utf-8') as read:
     reference.set_index("unique_id")
 
 with open("person_entities_cleaned.csv", "r", encoding='utf-8') as read2:
-    record = pd.read_csv(read, low_memory=False)
+    record = pd.read_csv(read2, low_memory=False)
     record.set_index("unique_id")
 
-    for i in range(reference.shape[0]):
-        name1 = reference['entity']
-        entry = record[record.index == i]
-        if entry.shape[0] > 1:
+    #for i in range(reference.shape[0]):
+    #    name1 = reference['entity']
+    #    entry = record[record.index == i]
+    #    if entry.shape[0] > 1:
+lower = record['entity'].str.lower()
+record['entity'] = lower
+
+record.set_index('entity')
+
+names = pd.unique(record['entity'])
+#names = names.astype('category')
+allnames = pd.DataFrame()
+
+
+for name in names:
+    name_r = record.loc[name]
+    occurences = name_r['unique_id']
+    name_dict = {"entity":name, "occurs":occurences}
+    allnames.append(name_dict, ignore_index=True)
+
 
 
 

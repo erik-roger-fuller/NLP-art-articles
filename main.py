@@ -3,6 +3,7 @@ import numpy as np
 import json
 import os
 import csv
+import pickle
 import spacy
 import time
 #from encyclopedia_builder import ents_encyc_builder
@@ -37,19 +38,19 @@ folder_path = os.path.join(global_path, path)
 # os.path.expanduser()
 filelist = os.listdir(folder_path)
 total = len(filelist)
-#rints = random_corpus_sampling(total, filelist)
+rints = random_corpus_sampling(total, filelist)
 
 
 with open("random_integers_master.json", "r") as fp:
     loadit = json.load(fp)
     #json.dump(rints, fp)
 
-c = 1000
+c = 250
 
 nlp = spacy.load('en_core_web_md')#trf'
 start = time.time()
 
-for i in range(175000,total, c):
+for i in range(0,total, c):
     data = article_loader_to_df(folder_path=folder_path, iterable=c, begin=i, fileguide=loadit)#, israndom=True
     end = time.time()
     print(f" now articles {i}to {(i+c)} of {total} with {int((end - start)//60)}:{(end - start)%60} elapsed")
