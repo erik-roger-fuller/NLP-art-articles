@@ -5,7 +5,7 @@ import os
 import csv
 import spacy
 import time
-from fuzzywuzzy import fuzz
+#from fuzzywuzzy import fuzz
 
 def levenshtien_distance(x,y):
     return fuzz.ratio(x, y)
@@ -26,40 +26,90 @@ def compare_lev(name1, encyc_m):
         return matches
 
 #ref_file = "C:\\Users\\17742\\Desktop\\win_art_writing\\art_writing\\text_cleaned\\articles_ids_index.csv" ##win
-ref_file = "/home/erik/Desktop/Datasets/art/art_writing/text_cleaned/articles_ids_index.csv" ##linux
 #folder_path = "entities_backups"#os.path.join(global_path, path)
 
+reference = pd.read_pickle("article_cleaned.pkl")
 
-with open(ref_file, "r", encoding='utf-8') as read:
-    reference = pd.read_csv(read, low_memory=False)
-    reference.set_index("unique_id")
 
-with open("person_entities_cleaned.csv", "r", encoding='utf-8') as read2:
+with open("csv_backups/person_entities_cleaned.csv", "r", encoding='utf-8') as read2:
     record = pd.read_csv(read2, low_memory=False)
-    record.set_index("unique_id")
+    read2.close()
+    #record.set_index("unique_id")
 
     #for i in range(reference.shape[0]):
     #    name1 = reference['entity']
     #    entry = record[record.index == i]
     #    if entry.shape[0] > 1:
-lower = record['entity'].str.lower()
-record['entity'] = lower
+reference = reference.set_index("unique_id")
 
-record.set_index('entity')
+record.entity = record.entity.str.replace("’s", "")
+record['entity'] = record['entity'].str.lower()
+record.entity = record['entity'].str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
+record.unique_id = record['unique_id'].astype(int)
 
-names = pd.unique(record['entity'])
-#names = names.astype('category')
-allnames = pd.DataFrame()
+a = 1
+concated = pd.DataFrame({'entity': [], 'unique_id': [],
+                'title': [],  'source': [], 'author'  :[], 'url': [],
+                 'tags': [], 'pubtime': [], 'filename':[]})
+for row in reference.itertuples(index=True):
+
+    findings = record[record["unique_id"] == int(row[0])]
+    print(row)
+    if findings.shape[0] != 0:
+        for found in findings['entity']:
+            a += 1
+            # print(found[1])
+            addfound = {
+                'entity': found, 'unique_id': row[0],
+                'title': row[1], 'source': row[2], 'author': row[3], 'url': row[4],
+                'tags': row[5], 'pubtime': row[6], 'filename': row[7]
+            }
+            print(found, end=" , ")
+            concated = concated.append(addfound, ignore_index=True)
+            if a % 50000 == 0:
+                print(concated.describe())
+                concated.to_pickle(f"pkl_backups/concated_bkp_at_{a}")
+concated.to_pickle("pkl_backups/concated_bkp_all")
+
+"""
+for id in record["unique_id"]:
+   
+    find = reference.loc[id]
+    find = find.append(record.loc[id])
+    concated = pd.concat([concated, find.to_frame().T])
+    #find, ignore_index=True)
+    print(a)
 
 
-for name in names:
-    name_r = record.loc[name]
-    occurences = name_r['unique_id']
-    name_dict = {"entity":name, "occurs":occurences}
-    allnames.append(name_dict, ignore_index=True)
 
 
 
+
+
+
+with open(ref_file, "r", encoding='utf-8') as read:
+    reference = pd.read_csv(read, low_memory=False)
+    reference.set_index("unique_id")
+    read.close()
+
+
+#for name in names:
+#    name_r = record.loc[name]
+#    occurences = name_r['unique_id']
+#    name_dict = {"entity":name, "occurs":occurences}
+#    allnames.append(name_dict, ignore_index=True)
+
+for id in record["unique_id"]:
+    find = reference.loc[id]
+    find = find.append(record.loc[id])
+    concated = pd.concat([concated, find.to_frame().T])
+    #find, ignore_index=True)
+    print(find)
+
+
+del all_ents["Unnamed: 0"]
+del all_ents["Unnamed: 0.1"]
+del all_ents["Unnamed: 0.1.1"]
 
         #    record.loc[i, "entity"] = first_name_last(entry["entity"])
         #print(entry)
@@ -71,7 +121,7 @@ for name in names:
 
 
 
-"""
+
 def first_name_last(names):
     tests = {}
     for name in names:
@@ -144,6 +194,4 @@ for file in filelist:  #[13:18]
             doc_ent_matrix_orgs = pd.concat([doc_ent_matrix_orgs, entry], sort=False)
 
 doc_ent_matrix_orgs.to_csv("all_art_organiz_entities.csv", sep=",", quoting=csv.QUOTE_NONNUMERIC)
-doc_ent_matrix_pers.to_csv("all_art_persons_entities.csv", sep=",", quoting=csv.QUOTE_NONNUMERIC)
-
-"""
+doc_ent_matrix_pers.to_csv("all_art_persons_entities.csv", sep=",", quoting=csv.QUOTE_NONNUMERIC)"""
