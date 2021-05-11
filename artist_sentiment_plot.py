@@ -4,33 +4,44 @@ import numpy as np
 
 
 
-backgnd = "~/home/erik/Desktop/Datasets/art/art_writing/text_cleaned/"
+backgnd = "C:\\Users\\17742\\Desktop\\win_art_writing\\art_writing\\text_cleaned\\text_cleaned_all\\"
+#"~/home/erik/Desktop/Datasets/art/art_writing/text_cleaned/"
 
-def entity_cross_suba(artist):
-    for file in artist.filename:
+def entity_cross_sub(artist):
+    artist['polarity'], artist['subjectivity'] = "",""
+    for file in artist.filename.unique():
         filename = backgnd + file
-        with open(filename, "r") as parse:
-            data = pd.read_json(parse)
-            pol = lambda x: TextBlob(x).sentiment.polarity
-            sub = lambda x: TextBlob(x).sentiment.subjectivity
-            artist.loc(file, artist['filename'])['polarity'] = data['para'].apply(pol)
-            artist.loc(file, artist['filename'])['subjectivity'] = data['para'].apply(sub)
+        with open(filename, "r", encoding="utf8") as json_data:
+            data = json.load(json_data)
+            para = data['para']
+            pol = TextBlob(para).sentiment.polarity
+            sub = TextBlob(para).sentiment.subjectivity
+            entries = artist.loc[artist['filename'] == file]
+            entries['polarity'], entries['subjectivity'] = pol, sub
+            artist.loc[artist['filename'] == file] = entries
+            print(f"'{data['title'][:30]}...'\t pol: {pol} , sub: {sub}")
+    artist_save(artist)
+    return artist
 
 
-concated = pd.DataFrame({'entity': [], 'unique_id': [],
-                'title': [],  'source': [], 'author'  :[], 'url': [],
-                 'tags': [], 'pubtime': [], 'filename':[]})
-for row in ref1.itertuples(index=True):
-    findings = record[record["unique_id"] == int(row[0])]
-    # print(row, found)
-    if findings.shape[0] != 0:
-        for found in findings['entity']:
-            # print(found[1])
-            addfound = {
-                'entity': found, 'unique_id': row[0],
-                'title': row[1], 'source': row[2], 'author': row[3], 'url': row[4],
-                'tags': row[5], 'pubtime': row[6], 'filename': row[7]
-            }
-            print(addfound)
-            concated = concated.append(addfound, ignore_index=True)
+def artist_save(artist):
+    name = artist.iloc[0].entity
+    name = name.replace(" ", "_")
+    file = f"artists_save/{name}.pkl"
+    pd.to_pickle(artist, file)
+    print("success: ", file)
+
+def pol_subj_plot(artist):
+    name = artist.iloc[0].entity
+    if artist.shape[0] > 1000:
+        dsize=1
+    else:
+        dsize=2
+    ax = artist.plot(kind='scatter', x='pubtime', y='subjectivity',
+                     color="Orange", s=dsize, label="subjectivity")
+    artist.plot(kind='scatter', x='pubtime', y='polarity', color="Blue",
+                label="polarity", title=f"{name} pol/subj vs. time".title(), s=dsize, ax=ax)
+    plt.show()
+
+
 

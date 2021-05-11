@@ -31,15 +31,17 @@ def compare_lev(name1, encyc_m):
 reference = pd.read_pickle("article_cleaned.pkl")
 
 
-with open("csv_backups/person_entities_cleaned.csv", "r", encoding='utf-8') as read2:
+with open("person_entities_cleaned.csv", "r", encoding='utf-8') as read2:
     record = pd.read_csv(read2, low_memory=False)
     read2.close()
     #record.set_index("unique_id")
 
     #for i in range(reference.shape[0]):
     #    name1 = reference['entity']
-    #    entry = record[record.index == i]
-    #    if entry.shape[0] > 1:
+    #    entry = record[record.index == i] #    if entry.shape[0] > 1:
+
+reference.unique_id = reference['unique_id'].astype(int)
+reference = reference[reference['unique_id'] > 54975]
 reference = reference.set_index("unique_id")
 
 record.entity = record.entity.str.replace("’s", "")
@@ -47,29 +49,57 @@ record['entity'] = record['entity'].str.lower()
 record.entity = record['entity'].str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8')
 record.unique_id = record['unique_id'].astype(int)
 
-a = 1
+a = 1350000
+b = a
+
+
+
+
 concated = pd.DataFrame({'entity': [], 'unique_id': [],
                 'title': [],  'source': [], 'author'  :[], 'url': [],
                  'tags': [], 'pubtime': [], 'filename':[]})
+
 for row in reference.itertuples(index=True):
 
     findings = record[record["unique_id"] == int(row[0])]
+    findings = findings["entity"]
+    print(a)
     print(row)
     if findings.shape[0] != 0:
-        for found in findings['entity']:
+        foundlist = []
+        for entity in findings:
             a += 1
+
             # print(found[1])
             addfound = {
-                'entity': found, 'unique_id': row[0],
+                'entity': entity, 'unique_id': row[0],
                 'title': row[1], 'source': row[2], 'author': row[3], 'url': row[4],
                 'tags': row[5], 'pubtime': row[6], 'filename': row[7]
             }
-            print(found, end=" , ")
-            concated = concated.append(addfound, ignore_index=True)
+            print(entity, end=" , ")
+            #concated = concated.append(addfound, ignore_index=True)
+            foundlist.append(addfound)
             if a % 50000 == 0:
+                df_final = pd.DataFrame.from_dict(foundlist)
+                concated = pd.concat([concated, df_final], axis=0)
                 print(concated.describe())
-                concated.to_pickle(f"pkl_backups/concated_bkp_at_{a}")
-concated.to_pickle("pkl_backups/concated_bkp_all")
+                concated.to_pickle(f"pkl_backups/concated_bkp_{b}_to_{a}")
+                foundlist = [{'entity': [], 'unique_id': [],
+                'title': [],  'source': [], 'author'  :[], 'url': [],
+                 'tags': [], 'pubtime': [], 'filename':[]}]
+
+                b += 50000
+
+                concated = pd.DataFrame({'entity': [], 'unique_id': [],
+                                         'title': [], 'source': [], 'author': [], 'url': [],
+                                         'tags': [], 'pubtime': [], 'filename': []})
+        df_final = pd.DataFrame.from_dict(foundlist)
+        concated = pd.concat([concated, df_final], axis=0) #keys=['entity', 'unique_id','title', 'source', 'author',
+                                   #'url','tags','pubtime', 'filename'])
+       #for found in findings['entity']:( row)
+
+
+concated.to_pickle("pkl_backups/concated_150000_to_all")
 
 """
 for id in record["unique_id"]:
