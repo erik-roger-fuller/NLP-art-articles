@@ -3,6 +3,8 @@ import numpy as np
 import re
 import json
 import os
+import textblob
+from textblob import TextBlob
 import csv
 import pickle
 import spacy
@@ -31,8 +33,14 @@ import time
 #from article_loader_parser import article_loader_to_df
 from named_entity_recognition_articles import ner_grabber
 
+def sentiment_inline(para):
+    pol = TextBlob(para).sentiment.polarity
+    sub = TextBlob(para).sentiment.subjectivity
+    return pol, sub
+
 def single_line_clean(line):
-    line = "".join(line)
+    line = "".join(line) if type(line) is list else line
+
     line = line.replace("\r", " ").replace("\n", ' ')
     line = re.sub('[ ]+', ' ', line)
     return line
@@ -112,7 +120,7 @@ def article_processor(folder_path, iterable, begin):
         #print(text_dict)
         #print(para)
         """ here is where the nlp stuff begins"""
-        df = ner_grabber(para, u_id, nlp, 5000)
+        df = ner_grabber(para, u_id, nlp)
 
         #adding the metadata to all ents
         df['title']= title
@@ -130,34 +138,48 @@ def article_processor(folder_path, iterable, begin):
 
         df['in_title'] = df.apply(lambda x:  (x['title'].lower()).find(x["ent_string"]) != -1 , axis=1)
 
+        pol, sub = sentiment_inline(para)
+        df["polarity"] = pol
+        df["subjectivity"] = sub
+
+
         print(df.head())
         frames = [df_all, df]
         df_all = pd.concat(frames, sort=False)
 
-    print(df_all)
+    print(df_all.info())
+
     print(f"Keyerrors: {keyerror} \t Json import errors: {jsonerror}  \t  final import count: {final}")
     return df_all
 
 
 global_path ='C:/Users/17742/Desktop/win_art_writing/'  #windows:art_writing/
 #ubuntu  : global_path = '/home/erik/Desktop/Datasets/art/art_writing/text_cleaned', nlp=nlp
-chunksize = 2500
+chunksize = 15#00
 path = 'artnews_artinamerica'
 folder_path = os.path.join(global_path, path)
 
 nlp = spacy.load('en_core_web_md')
 
 filelist = os.listdir(folder_path)
-
+allshape = 0
 start = time.time()
-for chunkbegin in range(0, len(filelist), chunksize):
+for chunkbegin in range(13500, 30, chunksize): # 5 len(filelist)
     per = time.time()
     df_all = article_processor(folder_path, chunksize, chunkbegin)
-    df_all.to_pickle(f"pkl_backups/second_pass/new_pass_articles_{chunkbegin}_to_{chunkbegin}.pkl")
-    end = time.time()
-    print(f" now articles {chunkbegin}to {(chunkbegin + chunksize)} of {len(filelist)}"
-          f" with {int((end - start) // 60)}:{(end - start) % 60} elapsed and {(end - per) % 60} since last save")
+    df_all.to_pickle(f"pkl_backups/second_pass/new_pass_sp_articles_{chunkbegin}_to_{chunkbegin+chunksize}.pkl")
 
+    end = time.time()
+    shape = df_all.shape[0]
+    allshape += shape
+    with open('pkl_backups/second_pass/logger.txt', "a") as f:
+        log = [f"\n now {time.ctime()}, \n",
+               f"articles {chunkbegin} to {(chunkbegin + chunksize)} of {len(filelist)}",
+            f" with {int((end - start) // 60)}:{(end - start) % 60} elapsed and {int((end - per) // 60)}:{(end - per) % 60} since last save\n"
+            f"{chunksize} articles, last dataframe was {shape} lines long and so far {allshape} ents have been written\n"]
+        print(log)
+        f.writelines(log)
+        f.close()
 
 """        text_dict = {"title": title, "article_uid": u_id, "author": author,
                      "url": j_import['url'], "tags": tags, "pubtime": pubtime,

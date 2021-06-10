@@ -19,11 +19,11 @@ def first_name_last(names):
         last = s_name[-1]
         if len(s_name)>1:
             tests[last] = name
-    print("name input: ",names.values)
+    #print("name input: ",names.values)
     print("name tests: ",tests)
     for last in tests.keys():
         names = [tests[last] if i == last else i for i in names]
-    print("name output: ",names)
+    #print("name output: ",names)
     return names
 
 def abbreviation_parser(orgs_found):
@@ -40,7 +40,7 @@ def abbreviation_parser(orgs_found):
         except ZeroDivisionError:
             tests.append(org)
 
-    print("orgs:", len(abbrevs) + len(tests))
+    #print("orgs:", len(abbrevs) + len(tests))
     if len(abbrevs) > 0:
         for test in tests:
 
@@ -62,8 +62,8 @@ def abbreviation_parser(orgs_found):
                 # abbrevs = ["Museum of Contemporary Art" if i=="MOCA" else i for i in abbrevs]
 
         tests.extend(abbrevs)
-    print("replaced or remaining: ", len(abbrevs), abbrevs)
-    print("unabbreved: ", len(tests), tests)
+    print("orgs replaced or remaining: ", len(abbrevs), abbrevs)
+    print("orgs unabbreved: ", len(tests))#, tests
     #tests = [test.upper() for test in tests]
     return tests
 
@@ -77,7 +77,7 @@ def ent_sorter(text, label, unique_id, ent_types):
     else:
         pass
 
-def ner_grabber(para, unique_id, nlp, prev):
+def ner_grabber(para, unique_id, nlp):
     #ent_types = ['PERSON','ORG','GPE', 'DATE','CARDINAL', 'NORP','MONEY',
     #              'WOR', 'FAC', 'LOC', 'WORK_OF_ART', 'EVENT']
     ent_types = ['PERSON', 'ORG', 'GPE',  'DATE','NORP', 'MONEY',
@@ -105,7 +105,9 @@ def ner_grabber(para, unique_id, nlp, prev):
     df = pd.DataFrame(document_mentions)
 
     """here the amount of entities are finally specified"""
-    ent_ids = [i for i in range(prev, prev + df.shape[0])]
+    ent_ids = [i for i in range(0, df.shape[0])]
+    ent_ids = [unique_id + (i*.001) for i in ent_ids]
+
     df['ent_id'] = ent_ids
     df['ent_string'] = df['ent_string'].str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.lower()
 
