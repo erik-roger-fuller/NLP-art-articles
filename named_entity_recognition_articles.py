@@ -67,7 +67,7 @@ def abbreviation_parser(orgs_found):
     #tests = [test.upper() for test in tests]
     return tests
 
-nlp = spacy.load('en_core_web_trf')  # lg')
+#nlp = spacy.load('en_core_web_trf')  # lg')
 
 def ent_sorter(text, label, unique_id, ent_types):
     if label in ent_types:
@@ -78,13 +78,15 @@ def ent_sorter(text, label, unique_id, ent_types):
         pass
 
 def ner_grabber(para, unique_id, nlp):
+    print(len(para))
+
     #ent_types = ['PERSON','ORG','GPE', 'DATE','CARDINAL', 'NORP','MONEY',
     #              'WOR', 'FAC', 'LOC', 'WORK_OF_ART', 'EVENT']
     ent_types = ['PERSON', 'ORG', 'GPE',  'DATE','NORP', 'MONEY',
                   'WOR', 'FAC', 'LOC', 'WORK_OF_ART', 'EVENT']
     document_mentions = []
 
-    if para and unique_id:
+    if unique_id:
         try:
             doc = nlp(para)
             for ent in doc.ents:
@@ -103,25 +105,32 @@ def ner_grabber(para, unique_id, nlp):
     else:
         pass
     df = pd.DataFrame(document_mentions)
+    if len(document_mentions) >= 1:
+        """here the amount of entities are finally specified"""
+        ent_ids = [i for i in range(0, df.shape[0])]
+        ent_ids = [unique_id + (i*.001) for i in ent_ids]
 
-    """here the amount of entities are finally specified"""
-    ent_ids = [i for i in range(0, df.shape[0])]
-    ent_ids = [unique_id + (i*.001) for i in ent_ids]
+        df['ent_id'] = ent_ids
+        #print(df)print(document_mentions)print(para)
 
-    df['ent_id'] = ent_ids
-    df['ent_string'] = df['ent_string'].str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.lower()
+        df['ent_string'] = df['ent_string'].str.normalize('NFKD').str.encode('ascii', errors='ignore').str.decode('utf-8').str.lower()
 
-    orgs_found = df[(df['ent_type'] == "ORG") | (df['ent_type'] == "GPE")]
-    #print(orgs_found["ent_string"])
-    orgs_found["ent_string"] = abbreviation_parser(orgs_found["ent_string"])
+        orgs_found = df[(df['ent_type'] == "ORG") | (df['ent_type'] == "GPE")]
+        #print(orgs_found["ent_string"])
 
-    df[(df['ent_type'] == "ORG") | (df['ent_type'] == "GPE")] = orgs_found
+        orgs_found["ent_string"] = abbreviation_parser(orgs_found["ent_string"])
 
-    names_found = df[df['ent_type'] == "PERSON"]
-    names_found["ent_string"] = first_name_last(names_found["ent_string"])
-    #print(names_found)
-    df[df['ent_type'] == "PERSON"] = names_found
-    return df #, document_person_mentions.loc.loc[,:]#print(df.loc[["ORG","GPE"], ["ent_type"]])
+        df[(df['ent_type'] == "ORG") | (df['ent_type'] == "GPE")] = orgs_found
+
+        names_found = df[df['ent_type'] == "PERSON"]
+
+        names_found["ent_string"] = first_name_last(names_found["ent_string"])
+        #print(names_found)
+        df[df['ent_type'] == "PERSON"] = names_found
+        return df
+    else:
+        return df
+
 
 def spacy_importer_prepper(data, model):
     nlp = spacy.load(model)
