@@ -8,8 +8,7 @@ import spacy
 import time
 #from encyclopedia_builder import ents_encyc_builder
 from named_entity_recognition_articles import spacy_importer_prepper
-from article_loader_parser import article_loader_to_df, random_corpus_sampling
-
+from article_loader_parser import article_loader_to_df, random_corpus_sampling, article_text_id_assigner
 
 def doc_opener(document_mentions, content, i , c):
     docs = document_mentions.tolist()
@@ -50,8 +49,12 @@ c = 250
 nlp = spacy.load('en_core_web_md')#trf'
 start = time.time()
 
+article_text_id_assigner(folder_path=folder_path, iterable="all", begin=252548 )
+
+"""
 for i in range(0,total, c):
-    data = article_loader_to_df(folder_path=folder_path, iterable=c, begin=i, fileguide=loadit)#, israndom=True
+    begin = 252548
+    data = article_loader_to_df(folder_path=folder_path, iterable=c, begin=begin, fileguide=loadit)#, israndom=True
     end = time.time()
     print(f" now articles {i}to {(i+c)} of {total} with {int((end - start)//60)}:{(end - start)%60} elapsed")
     #data1 = data[:a]
@@ -62,15 +65,17 @@ for i in range(0,total, c):
         doc_opener(document_person_mentions, "persons", i, c)
     except ValueError:
         pass
+"""
 
-#article_text_id_assigner(folder_path=folder_path, iterable="all", begin=228002 )
+
+
 #data = article_loader_to_df(folder_path=folder_path, iterable=5000, israndom=True)
 #print(data)
 #plot = timeplot_sentiment(data, "polarity", path)
 #path = 'nytimes' # 122660 logged #122791 130 before error
 #then 27979 . hyperallergic finished. therfore new begin = 150770 {then plus 500
 #artforumen then logged 62414 frieze logged 14818 brings to 228002
-#artnet then 24546 bringing grand total to 252548
+#artnet then 24546 bringing grand total to 252548  250,241
 #path = 'artnet_articles'
 #path = 'frieze'
 #path = 'artforum'

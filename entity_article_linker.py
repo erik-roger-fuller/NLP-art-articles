@@ -101,6 +101,37 @@ for row in reference.itertuples(index=True):
 
 concated.to_pickle("pkl_backups/concated_150000_to_all")
 
+
+
+def first_name_last(names):
+    tests = {}
+    for name in names:
+        name = name.replace("'s","").replace("`s","").replace("’s","")
+        s_name = name.split(" ")
+        last = s_name[-1]
+        #first = s_name[0]
+        if len(s_name)>1:
+            tests[last] = name
+    print("input: ",names.values)
+    print("tests: ",tests)
+    for last in tests.keys():
+        names = [tests[last] if i == last else i for i in names]
+    print("output: ",names)
+    return names
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 """
 for id in record["unique_id"]:
    
