@@ -10,6 +10,9 @@ import feather
 import spacy
 import time
 from datetime import datetime
+#import pyarrow
+#from pyarrow import Table
+
 
 #from nltk.sentiment.vader import SentimentIntensityAnalyzer
 #import flair
@@ -29,6 +32,14 @@ from datetime import datetime
 
 #from article_loader_parser import article_loader_to_df
 from named_entity_recognition_articles import ner_grabber
+
+def url_to_title(j_import_url):
+    name = str(j_import_url)
+    name = name[0] if type(name) is list else name
+    name = "-".join(name.split("/")[-2:])
+    name = name.replace("-", " ").replace("]", " ").replace("'", "")
+    return name.title()
+
 
 def sentiment_inline(para):
     #s = flair.data.Sentence(sentence)
@@ -86,10 +97,11 @@ def article_processor(folder_path, chunksize, begin, u_id_begin):
                 continue
             except TypeError:
                 print(j_import)
-                break
+                continue
 
             try:
                 title = j_import['title']
+                title = str(title)
                 title = single_line_clean(title) if title else np.NAN
 
             except KeyError:
@@ -111,7 +123,7 @@ def article_processor(folder_path, chunksize, begin, u_id_begin):
 
             try:
                 tags = j_import['tag']
-                tags = filter(None, tags) if type(tags) == list else np.NAN
+                filter(None, tags) if type(tags) == list else np.NAN
             except KeyError:
                 tags = np.NAN
                 keyerror += 1
@@ -122,7 +134,9 @@ def article_processor(folder_path, chunksize, begin, u_id_begin):
                 if type(pubtime) == str:
                     try:
                         pubtime = datetime.strptime(pubtime, "%m/%d/%Y")
+                        ### most articles pubtimes covered by this
                     except ValueError:
+                        print(pubtime)
                         pass
             except KeyError:
                 pubtime = np.NAN
@@ -136,8 +150,8 @@ def article_processor(folder_path, chunksize, begin, u_id_begin):
             pass
 
         print(f"unique ID int : {u_id}  source: {j_import['source']} title : {title} \n iterator {i} date: {pubtime}")#[10:25]
-        #print(text_dict)
-        #print(para)
+        #print(text_dict)       #print(para)
+
 
         """ here is where the nlp stuff begins"""
         df = ner_grabber(para, u_id, nlp)
@@ -151,15 +165,20 @@ def article_processor(folder_path, chunksize, begin, u_id_begin):
             df["url"] = str(j_import['url'])
             df["tags"] = str(tags)
             df["pubtime"] = pubtime
-            df["source"] = j_import['source']
+            df["source"] = str(j_import['source'])
             df["filename"] = str(file)
 
+            if j_import['source'] == 'eflux':
+                try:
+                    df["pubtime"] = datetime.strptime(pubtime, "%B %d, %Y")
+                except ValueError:
+                    print(pubtime)
+                # "October 7, 2012"
+
             if j_import['source'] == 'artagenda' and title == "art-agenda":
-                name = str(j_import['url'])
-                name = name[0] if type(name) is list else name
-                name = name.split("/")[-1]
-                name = name.replace("-"," ").replace("]"," ").replace("'","")
-                df['title']= name.title()
+                df['title'] = url_to_title(j_import['url'])
+            elif j_import['source'] == 'eflux' and (title == "" or title == "e-flux"):
+                df['title'] = url_to_title(j_import['url'])
 
             if pd.notna(author) == True:
                 df['is_author'] = df['ent_string'].where(df['ent_string'] == author.lower(), False)
@@ -178,8 +197,6 @@ def article_processor(folder_path, chunksize, begin, u_id_begin):
             df["polarity"] = sent[0]
             df["subjectivity"] = sent[1]
 
-            #df['sentiment'] = sent
-
             print(df.head())
             frames = [df_all, df]
             df_all = pd.concat(frames, sort=False)
@@ -191,12 +208,12 @@ def article_processor(folder_path, chunksize, begin, u_id_begin):
     return df_all
 
 
-global_path ='C:/Users/17742/Desktop/win_art_writing/art_writing' #text_cleaned  #windows:
-#ubuntu  : global_path = '/home/erik/Desktop/Datasets/art/art_writing/text_cleaned', nlp=nlp
-chunksize = 1500
+global_path ='C:/Users/17742/Desktop/win_art_writing/art_writing' #/text_cleaned'  #windows:
+# ubuntu  : global_path = '/home/erik/Desktop/Datasets/art/art_writing/text_cleaned', nlp=nlp
 
-path = 'artagenda' #'text_cleaned_all'
-#path = 'artnews_artinamerica'
+
+#path = 'eflux'  # 'text_cleaned_all' 'artagenda'
+path = 'bomb' #"updated_scrapes" #'artnews_artinamerica'
 folder_path = os.path.join(global_path, path)
 
 nlp = spacy.load('en_core_web_md')
@@ -206,33 +223,44 @@ filelist = os.listdir(folder_path)
 allshape = 0
 start = time.time()
 pd.set_option('mode.chained_assignment', None)
+chunksize = 1500
+u_id_begin = 279651
+
+#u_id_begin += 0
 
 for begin in range(0, len(filelist), chunksize): # 5 len(filelist)
     per = time.time()
-    df_all = article_processor(folder_path, chunksize, begin, 250240 )
+    df_all = article_processor(folder_path, chunksize, begin, u_id_begin)
 
-    #df_all.to_pickle(f"pkl_backups/second_pass/new_pass_first_corpus_{begin}_to_{begin+chunksize}.pkl")
+    u_id_begin = u_id_begin + chunksize
+
+    #df_all.to_pickle(f"pkl_backups/second_pass/{path}_as_pkl_{begin}_to_{begin+chunksize}.pkl")
     df_all = df_all.reset_index()
-    df_all.to_feather(f"pkl_backups/second_pass/pass_art_agenda_{begin}_to_{begin+chunksize}.feather")
+    df_all.index = df_all.index.astype(int)
+    #df_conv = Table.from_pandas(df_all, preserve_index=True, safe=False )
+    df_all.to_feather( f"pkl_backups/second_pass/pass_{path}_{begin}_to_{begin+chunksize}.feather")
+    #pyarrow.feather.write_feather(df_conv, f"pkl_backups/second_pass/pass_{path}_{begin}_to_{begin+chunksize}.feather")
 
     end = time.time()
     shape = df_all.shape[0]
     allshape += shape
     with open('pkl_backups/second_pass/logger.txt', "a") as f:
-        log = [f"\n now {time.ctime()}, \n",
+        log = [f"\n now {time.ctime()}, processing {path.upper()} \n",
                f"articles {begin} to {(begin + chunksize)} of {len(filelist)}",
             f" with {int((end - start) // 60)}:{(end - start) % 60} elapsed and {int((end - per) // 60)}:{(end - per) % 60} since last save\n"
             f"{chunksize} articles, last dataframe was {shape} lines long and so far {allshape} ents have been written\n"]
         print(log)
         f.writelines(log)
+        df_all = [] #MEM CLEAR HERE
         f.close()
 
-"""        text_dict = {"title": title, "article_uid": u_id, "author": author,
-                     "url": j_import['url'], "tags": tags, "pubtime": pubtime,
-                     "source": j_import['source'], "filename": file }
+"""        
+text_dict = {"title": title, "article_uid": u_id, "author": author,
+             "url": j_import['url'], "tags": tags, "pubtime": pubtime,
+             "source": j_import['source'], "filename": file }
                      
 final {'ent_string':text, 'ent_type':label, "ent_id":ent_id,  "article_uid": u_id, "author": author, "url": j_import['url'], "tags": tags,
- "pubtime": pubtime, "source": j_import['source'], "filename": file, 'is_author':is_author,  'in_title':in_title,"polarity": sent[0] ,
-  "subjectivity": sent[1]  }         
+     "pubtime": pubtime, "source": j_import['source'], "filename": file, 'is_author':is_author,  'in_title':in_title,"polarity": sent[0] ,
+     "subjectivity": sent[1]  }         
                      
-                     """
+ """
